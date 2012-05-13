@@ -121,6 +121,10 @@ cdef class Key(object):
             ecc_free(&self.key)
 
     cdef _make_custom_key(self, Curve curve, dict d):
+        # There's absolutly no error checking here. At the very least we should
+        # check that x, y, & private have the correct length to be used with
+        # `curve`.
+
         self.key.curve = curve.curve
         mp.init(&self.key.public.x)
         mp.init(&self.key.public.y)

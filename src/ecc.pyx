@@ -91,14 +91,24 @@ cdef class Key(object):
             self._from_string(curve)
             return
 
-        # If given an int, pick a curve that is atleast that many bits.
+        # If given an int, pick a curve that is at least that many bits.
         if isinstance(curve, (int, long)):
             curve = Curve(curve)
 
         # If given a curve, make a random key for that curve.
         if isinstance(curve, Curve):
-            self._make_key(curve, prng)
             self.curve = curve
+            self.key.idx = curve.idx
+
+            # If given a dict as prng, use the dict parameters for the key
+            if isinstance(prng, dict):
+                x = prng
+                # format dict(x=,y=,private=)
+                # If private is None, the key will be public
+                self.key.type = PK_PRIVATE if 'private' in x else PK_PUBLIC
+                self._make_custom_key(curve, x)
+            else:
+                self._make_key(curve, prng)
             return
         
         # Don't let user code instantiate blank keys.
@@ -110,10 +120,31 @@ cdef class Key(object):
         if self.key.public.x != NULL:
             ecc_free(&self.key)
 
+    cdef _make_custom_key(self, Curve curve, dict d):
+        self.key.curve = curve.curve
+        mp.init(&self.key.public.x)
+        mp.init(&self.key.public.y)
+        mp.init(&self.key.public.z)
+        mp.init(&self.key.private)
+
+        cdef bytes x = d['x']
+        check_for_error(mp.read_radix(
+            self.key.public.x, <char*>x, 16))
+
+        cdef bytes y = d['y']
+        check_for_error(mp.read_radix(
+            self.key.public.y, <char*>y, 16))
+
+        check_for_error(mp.set_int(self.key.public.z, 1))
+
+        cdef bytes priv
+        if 'private' in d:
+            priv = d['private']
+            check_for_error(mp.read_radix(self.key.private, <char*>priv, 16))
+
     cdef _make_key(self, Curve curve, raw_prng):
         cdef PRNG prng = conform_prng(raw_prng)
         check_for_error(ecc_make_key_ex(&prng.state, prng.idx, &self.key, curve.curve))
-        self.key.idx = curve.idx
 
     cdef _from_string(self, input):
         

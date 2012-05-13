@@ -1,7 +1,4 @@
-
-
-
-# Setup TomsFastMath for use.
+# Setup LibTomMath for use.
 mp = ltm_desc
 
 

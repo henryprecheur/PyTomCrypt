@@ -13,7 +13,7 @@ default : build
 # Evaluating Mako templates.
 build/src/tomcrypt.%: src/%
 	@ mkdir -p build/src
-	./preprocess $< > $@
+	$(PYTHON) ./preprocess $< > $@
 
 # Translating Cython to C.
 tomcrypt/%.c: build/src/tomcrypt.%.pyx

@@ -1,4 +1,5 @@
-PYTHON = bin/python
+PYTHON = python
+CYTHON = cython
 PREPROCESS = ./preprocess
 
 MOD_NAMES = _core cipher ecc hash mac pkcs1 pkcs5 prng rsa
@@ -17,7 +18,7 @@ build/src/tomcrypt.%: src/%
 
 # Translating Cython to C.
 tomcrypt/%.c: build/src/tomcrypt.%.pyx
-	cython -o $@.tmp $<
+	$(CYTHON) -o $@.tmp $<
 	mv $@.tmp $@
 
 # Requirements for the core.
@@ -26,10 +27,10 @@ build/src/tomcrypt._core.c: $(filter %-core.pxd,$(CYTHON_SRCS))
 sources: $(CYTHON_SRCS) $(C_NAMES)
 
 build: $(CYTHON_SRCS) $(C_NAMES)
-	python setup.py build_ext --inplace
+	$(PYTHON) setup.py build_ext --inplace
 
 test: build
-	python -m unittest discover -v
+	$(PYTHON) -m unittest discover -v
 
 readme: README.html
 
